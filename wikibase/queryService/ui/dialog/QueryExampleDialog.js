@@ -206,7 +206,7 @@ PREFIX gsp: <http://www.opengis.net/ont/geosparql#>
 
 SELECT DISTINCT ?monitoringLocation ?wkt
 WHERE {
-  # Specify the mainstem (Animas River)
+  # Specify your desired mainstem 
   VALUES ?mainstem { <https://geoconnex.us/ref/mainstems/35394> }
 
   # Get monitoring locations along the mainstem
