@@ -7,10 +7,10 @@
       "uri": "https://www.wikidata.org/w/api.php"
     },
     "examples": {
-      "server": "https://docs.geoconnex.us/",
-      "apiPath": "w/api.php",
-      "pageTitle": "Wikidata:SPARQL_query_service/queries/examples",
-      "pagePathElement": "wiki/"
+      "server": "https://deploy-preview-53--docs-geoconnex-us.netlify.app/access/examples/custom_with_sparql/",
+      "apiPath": "access/overview/",
+      "pageTitle": "",
+      "pagePathElement": "examples"
     },
     "urlShortener": "tinyurl"
   },

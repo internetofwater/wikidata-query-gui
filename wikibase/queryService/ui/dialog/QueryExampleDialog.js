@@ -100,17 +100,17 @@ wikibase.queryService.ui.dialog.QueryExampleDialog = ( function ( $ ) {
 			$( banner ).insertAfter( '.exampleTable' );
 		}
 
-		var bannerContent = $( '<span>' )
-			.attr( 'data-i18n', '[html]wdqs-app-query-builder-example-banner-content' )
-			.addClass( 'wdqs-app-query-builder-banner-content' )
-			.html( 'You can create queries without having to write SPARQL in the <a>Query Builder</a>' );
-		new wikibase.queryService.ui.Banner(
-			'queryBuilderExampleDialog',
-			renderBanner,
-			onBannerDismiss,
-			true,
-			bannerContent
-		);
+		// var bannerContent = $( '<span>' )
+		// 	.attr( 'data-i18n', '[html]wdqs-app-query-builder-example-banner-content' )
+		// 	.addClass( 'wdqs-app-query-builder-banner-content' )
+		// 	.html( 'You can create queries without having to write SPARQL in the <a>Query Builder</a>' );
+		// new wikibase.queryService.ui.Banner(
+		// 	'queryBuilderExampleDialog',
+		// 	renderBanner,
+		// 	onBannerDismiss,
+		// 	true,
+		// 	bannerContent
+		// );
 
 		var self = this;
 		this._$element.focus( function () {
@@ -143,21 +143,53 @@ wikibase.queryService.ui.dialog.QueryExampleDialog = ( function ( $ ) {
 		var self = this,
 			category = null;
 
-		this._querySamplesApi.getExamples().then( function ( examples ) {
-			self._examples = examples;
-			self._initTagCloud();
-			self._updateExamplesCount( examples.length );
+		// Hardcoded examples
+		var examples = [
+			{
+				title: 'Get 10 random triples',
+            query: `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT * WHERE {
+  ?sub ?pred ?obj .
+} 
+LIMIT 10`,
+				href: '#',
+				tags: [ 'people', 'foaf' ],
+				category: 'People Queries'
+			},
+			{
+				title: 'Get all books',
+				query: 'SELECT ?book WHERE { ?book a <http://schema.org/Book> }',
+				href: '#',
+				tags: [ 'books', 'schema' ],
+				category: 'Book Queries'
+			},
+			{
+				title: 'Get all cities',
+				query: 'SELECT ?city WHERE { ?city a <http://schema.org/City> }',
+				href: '#',
+				tags: [ 'cities', 'schema' ],
+				category: 'Location Queries'
+			}
+		];
 
-			$.each( examples, function ( key, example ) {
-				if ( example.category !== category ) {
-					category = example.category;
-					self._$element.find( '.searchable' ).append( $( '<tr>' ).addClass( 'active' )
-						.append( $( '<td colspan="4">' ).text( category ) ) );
-				}
-				self._addExample( example.title, example.query, example.href, example.tags, category );
-			} );
+		self._examples = examples;
+		self._initTagCloud();
+		self._updateExamplesCount( examples.length );
+
+		$.each( examples, function ( key, example ) {
+			if ( example.category !== category ) {
+				category = example.category;
+				self._$element.find( '.searchable' ).append(
+					$( '<tr>' ).addClass( 'active' )
+						.append( $( '<td colspan="4">' ).text( category ) )
+				);
+			}
+			var safeTags = Array.isArray(example.tags) ? example.tags : [];
+        	self._addExample(example.title, example.query, example.href, safeTags, category);
 		} );
 	};
+
 
 	/**
 	 * @private
@@ -221,56 +253,54 @@ wikibase.queryService.ui.dialog.QueryExampleDialog = ( function ( $ ) {
 	 */
 	SELF.prototype._getCloudTags = function () {
 		var self = this,
-			filterTags = self._$element.find( '.tagFilter' ).tags().getTags();
+			filterTags = self._$element.find('.tagFilter').tags().getTags();
 
-		// filter tags that don't effect the filter for examples
-		var tagsFilter = function ( tags ) {
-			return filterTags.every( function ( selectedTag ) {
-				return tags.indexOf( selectedTag.match( /\((.*)\)/ )[1] ) !== -1;
-			} );
+		// filter tags that don't affect the filter for examples
+		var tagsFilter = function(tags) {
+			return filterTags.every(function(selectedTag) {
+				return tags.indexOf(selectedTag.match(/\((.*)\)/)[1]) !== -1;
+			});
 		};
 
 		// filter selected tags from tag cloud
-		var tagFilter = function ( tag ) {
-			var selectedTags = filterTags.map(
-				function ( v ) {
-					return v.match( /\((.*)\)/ )[1];
-				} );
-
-			return selectedTags.indexOf( tag ) !== -1;
+		var tagFilter = function(tag) {
+			var selectedTags = filterTags.map(function(v) {
+				return v.match(/\((.*)\)/)[1];
+			});
+			return selectedTags.indexOf(tag) !== -1;
 		};
 
 		var tagCloud = {};
-		$.each( self._examples, function ( key, example ) {
-			if ( !tagsFilter( example.tags ) ) {
+		$.each(self._examples, function(key, example) {
+			if (!tagsFilter(example.tags)) {
 				return;
 			}
 
-			$.each( example.tags, function ( key, tag ) {
-				if ( tagFilter( tag ) ) {
+			$.each(example.tags, function(key, tag) {
+				if (tagFilter(tag)) {
 					return;
 				}
 
-				if ( !tagCloud[tag] ) {
+				if (!tagCloud[tag]) {
 					tagCloud[tag] = { id: tag, weight: 1 };
 				} else {
 					tagCloud[tag].weight++;
 				}
-			} );
-		} );
+			});
+		});
 
-		tagCloud = _.compact( tagCloud ).sort( function ( a, b ) {
+		// Convert to array
+		tagCloud = Object.values(tagCloud).sort(function(a, b) {
 			return b.weight - a.weight;
-		} ).slice( 0, 50 );
+		}).slice(0, 50);
 
-		return this._wikibaseApi.getLabels( tagCloud.map( function ( v ) {
-			return v.id;
-		} ) ).then( function ( data ) {
-			tagCloud.forEach( function ( tag ) {
-				tag.label = _.compact( data.entities[tag.id].labels )[0].value;
-			} );
-			return tagCloud;
-		} );
+		// Instead of fetching labels from Wikibase, just use the tag ID as the label
+		tagCloud.forEach(function(tag) {
+			tag.label = tag.id;
+		});
+
+		// Return a resolved Promise for compatibility
+		return $.Deferred().resolve(tagCloud).promise();
 	};
 
 	/**
