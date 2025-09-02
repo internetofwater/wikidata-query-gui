@@ -143,7 +143,8 @@ wikibase.queryService.ui.dialog.QueryExampleDialog = ( function ( $ ) {
 		var self = this,
 			category = null;
 
-		// Hardcoded examples
+		// Hardcoded query examples; we put them here since geoconnex doesn't have a mediawiki endpoint
+		// and thus it is easier to just hardcode them
 		var examples = [
 			{
 				title: 'Get 10 random triples',
@@ -154,21 +155,67 @@ SELECT * WHERE {
 } 
 LIMIT 10`,
 				href: '#',
-				tags: [ 'people', 'foaf' ],
-				category: 'People Queries'
+				tags: [ 'misc', 'simple' ],
+				category: 'Miscellaneous Queries'
 			},
 			{
-				title: 'Get all books',
-				query: 'SELECT ?book WHERE { ?book a <http://schema.org/Book> }',
+				title: 'All datasets about the Animas River mainstem',
+				query: `PREFIX schema: <https://schema.org/>
+PREFIX gsp: <http://www.opengis.net/ont/geosparql#>
+PREFIX hyf: <https://www.opengis.net/def/schema/hy_features/hyf/>
+SELECT DISTINCT ?monitoringLocation ?siteName ?datasetDescription ?type ?url
+     ?variableMeasured ?variableUnit ?measurementTechnique ?temporalCoverage
+     ?distributionName ?distributionURL ?distributionFormat ?wkt
+WHERE {
+VALUES ?mainstem { <https://geoconnex.us/ref/mainstems/35394> }
+
+?monitoringLocation hyf:referencedPosition/hyf:HY_IndirectPosition/hyf:linearElement ?mainstem ;
+                    schema:subjectOf ?item ;
+                    hyf:HydroLocationType ?type ;
+                    gsp:hasGeometry/gsp:asWKT ?wkt .
+
+?item schema:name ?siteName ;
+      schema:temporalCoverage ?temporalCoverage ;
+      schema:url ?url ;
+      schema:variableMeasured ?variableMeasured .
+
+?variableMeasured schema:description ?datasetDescription ;
+                  schema:name ?variableMeasuredName ;
+                  schema:unitText ?variableUnit ;
+                  schema:measurementTechnique ?measurementTechnique .
+
+OPTIONAL {
+  ?item schema:distribution ?distribution .
+  ?distribution schema:name ?distributionName ;
+                schema:contentUrl ?distributionURL ;
+                schema:encodingFormat ?distributionFormat .
+}
+
+# Filter datasets by the desired variable description
+FILTER(REGEX(?datasetDescription, "temperature", "i"))
+}
+ORDER BY ?siteName`,
 				href: '#',
-				tags: [ 'books', 'schema' ],
-				category: 'Book Queries'
+				tags: [ 'mainstem', 'datasets' ],
+				category: 'Dataset Queries'
 			},
 			{
-				title: 'Get all cities',
-				query: 'SELECT ?city WHERE { ?city a <http://schema.org/City> }',
+				title: 'Map all monitoring locations on the Snake River',
+				query: `PREFIX hyf: <https://www.opengis.net/def/schema/hy_features/hyf/>
+PREFIX gsp: <http://www.opengis.net/ont/geosparql#>
+
+SELECT DISTINCT ?monitoringLocation ?wkt
+WHERE {
+  # Specify the mainstem (Animas River)
+  VALUES ?mainstem { <https://geoconnex.us/ref/mainstems/35394> }
+
+  # Get monitoring locations along the mainstem
+  ?monitoringLocation hyf:referencedPosition/hyf:HY_IndirectPosition/hyf:linearElement ?mainstem ;
+                      gsp:hasGeometry/gsp:asWKT ?wkt .
+}
+`,
 				href: '#',
-				tags: [ 'cities', 'schema' ],
+				tags: [ 'mainstem', 'map' ],
 				category: 'Location Queries'
 			}
 		];
