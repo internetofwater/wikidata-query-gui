@@ -217,6 +217,20 @@ WHERE {
 				href: '#',
 				tags: [ 'mainstem', 'map' ],
 				category: 'Location Queries'
+			},
+						{
+				title: 'All rivers that are upstream of the Sacramento River',
+				query: `PREFIX hyf: <https://www.opengis.net/def/schema/hy_features/hyf/>
+PREFIX gsp: <http://www.opengis.net/ont/geosparql#>
+ 
+SELECT DISTINCT ?mainstems ?wkt
+WHERE {
+  VALUES ?mainstem { <https://geoconnex.us/ref/mainstems/1> }
+  ?mainstems hyf:downstreamWaterbody+ ?mainstem ;
+                      gsp:hasGeometry/gsp:asWKT ?wkt .
+}`,
+				tags: [ 'mainstem', "downstream" ],
+				category: 'Location Queries'
 			}
 		];
 
