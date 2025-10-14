@@ -171,6 +171,19 @@ LIMIT 100
 				tags: [ 'misc', 'simple' ],
 				category: 'Miscellaneous Queries'
 			},
+						{
+				title: 'Total datasets in Geoconnex',
+            query: `PREFIX schema: <https://schema.org/>
+
+SELECT (COUNT(?dataset) AS ?numDatasets)
+WHERE {
+  ?dataset a schema:Dataset .
+}
+`,
+				href: '#',
+				tags: [ 'misc', 'simple', 'datasets' ],
+				category: 'Miscellaneous Queries'
+			},
 			{
 				title: 'All datasets about the Animas River mainstem',
 				query: `PREFIX schema: <https://schema.org/>
