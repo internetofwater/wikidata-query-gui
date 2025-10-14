@@ -158,6 +158,19 @@ LIMIT 10`,
 				tags: [ 'misc', 'simple' ],
 				category: 'Miscellaneous Queries'
 			},
+						{
+				title: 'Get 100 random locations',
+            query: `PREFIX gsp: <http://www.opengis.net/ont/geosparql#>
+SELECT DISTINCT ?monitoringLocation ?wkt
+WHERE {
+  ?monitoringLocation gsp:hasGeometry/gsp:asWKT ?wkt .
+}
+LIMIT 100
+`,
+				href: '#',
+				tags: [ 'misc', 'simple' ],
+				category: 'Miscellaneous Queries'
+			},
 			{
 				title: 'All datasets about the Animas River mainstem',
 				query: `PREFIX schema: <https://schema.org/>
