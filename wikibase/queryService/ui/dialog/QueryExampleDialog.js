@@ -259,7 +259,7 @@ WHERE {
 				category: 'Location Queries'
 			},
 									{
-				title: 'All rivers have "Charles" in their name',
+				title: 'All rivers that have "Charles" in their name',
 				query: `PREFIX hyf: <https://www.opengis.net/def/schema/hy_features/hyf/>
 PREFIX gsp: <http://www.opengis.net/ont/geosparql#>
 PREFIX schema: <https://schema.org/>
