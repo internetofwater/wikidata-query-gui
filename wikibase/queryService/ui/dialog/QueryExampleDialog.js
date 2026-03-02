@@ -3,6 +3,147 @@ wikibase.queryService = wikibase.queryService || {};
 wikibase.queryService.ui = wikibase.queryService.ui || {};
 wikibase.queryService.ui.dialog = wikibase.queryService.ui.dialog || {};
 
+// LIST YOUR SPARQL EXAMPLES HERE
+// each example should use "href: '#'" and have an associated category and tags;
+// each category should be grouped together in the list
+var SPARQL_EXAMPLES = [
+{
+title: 'Get 10 random triples',
+query: `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT * WHERE {
+?sub ?pred ?obj 
+} 
+LIMIT 10`,
+href: '#',
+tags: [ 'misc', 'simple' ],
+category: 'Miscellaneous Queries'
+},
+{
+title: 'Get 100 random locations',
+query: `PREFIX gsp: <http://www.opengis.net/ont/geosparql#>
+SELECT DISTINCT ?monitoringLocation ?wkt
+WHERE {
+?monitoringLocation gsp:hasGeometry/gsp:asWKT ?wkt .
+}
+LIMIT 100
+`,
+href: '#',
+tags: [ 'misc', 'simple' ],
+category: 'Miscellaneous Queries'
+},
+{
+title: 'Total datasets in Geoconnex',
+query: `PREFIX schema: <https://schema.org/>
+
+SELECT (COUNT(?dataset) AS ?numDatasets)
+WHERE {
+?dataset a schema:Dataset .
+}
+`,
+href: '#',
+tags: [ 'misc', 'simple', 'datasets' ],
+category: 'Miscellaneous Queries'
+},
+{
+title: 'All datasets about the Animas River mainstem',
+query: `PREFIX schema: <https://schema.org/>
+PREFIX gsp: <http://www.opengis.net/ont/geosparql#>
+PREFIX hyf: <https://www.opengis.net/def/schema/hy_features/hyf/>
+SELECT DISTINCT ?monitoringLocation ?siteName ?datasetDescription ?type ?url
+?variableMeasured ?variableUnit ?measurementTechnique ?temporalCoverage
+?distributionName ?distributionURL ?distributionFormat ?wkt
+WHERE {
+VALUES ?mainstem { <https://geoconnex.us/ref/mainstems/35394> }
+
+?monitoringLocation hyf:referencedPosition/hyf:HY_IndirectPosition/hyf:linearElement ?mainstem ;
+schema:subjectOf ?item ;
+hyf:HydroLocationType ?type ;
+gsp:hasGeometry/gsp:asWKT ?wkt .
+
+?item schema:name ?siteName ;
+schema:temporalCoverage ?temporalCoverage ;
+schema:url ?url ;
+schema:variableMeasured ?variableMeasured .
+
+?variableMeasured schema:description ?datasetDescription ;
+schema:name ?variableMeasuredName ;
+schema:unitText ?variableUnit ;
+schema:measurementTechnique ?measurementTechnique .
+
+OPTIONAL {
+?item schema:distribution ?distribution .
+?distribution schema:name ?distributionName ;
+schema:contentUrl ?distributionURL ;
+schema:encodingFormat ?distributionFormat .
+}
+
+# Filter datasets by the desired variable description
+FILTER(REGEX(?datasetDescription, "temperature", "i"))
+}
+ORDER BY ?siteName`,
+href: '#',
+tags: [ 'mainstem', 'datasets' ],
+category: 'Dataset Queries'
+},
+{
+title: 'Map all monitoring locations on the Snake River',
+query: `PREFIX hyf: <https://www.opengis.net/def/schema/hy_features/hyf/>
+PREFIX gsp: <http://www.opengis.net/ont/geosparql#>
+
+SELECT DISTINCT ?monitoringLocation ?wkt
+WHERE {
+# Specify your desired mainstem 
+VALUES ?mainstem { <https://geoconnex.us/ref/mainstems/35394> }
+
+# Get monitoring locations along the mainstem
+?monitoringLocation hyf:referencedPosition/hyf:HY_IndirectPosition/hyf:linearElement ?mainstem ;
+	gsp:hasGeometry/gsp:asWKT ?wkt .
+}
+`,
+href: '#',
+tags: [ 'mainstem', 'map' ],
+category: 'Location Queries'
+},
+	{
+title: 'All rivers that are upstream of the Sacramento River',
+query: `PREFIX hyf: <https://www.opengis.net/def/schema/hy_features/hyf/>
+PREFIX gsp: <http://www.opengis.net/ont/geosparql#>
+
+SELECT DISTINCT ?mainstems ?wkt
+WHERE {
+VALUES ?mainstem { <https://geoconnex.us/ref/mainstems/1> }
+?mainstems hyf:downstreamWaterbody+ ?mainstem ;
+	gsp:hasGeometry/gsp:asWKT ?wkt .
+}`,
+tags: [ 'mainstem', "downstream" ],
+category: 'Location Queries'
+},
+				{
+title: 'All rivers that have "Charles" in their name',
+query: `PREFIX hyf: <https://www.opengis.net/def/schema/hy_features/hyf/>
+PREFIX gsp: <http://www.opengis.net/ont/geosparql#>
+PREFIX schema: <https://schema.org/>
+
+SELECT DISTINCT ?mainstem ?name ?wkt
+WHERE {
+BIND("Charles" AS ?searchString)
+
+# flowpath allows us to filter by mainstems
+?mainstem a hyf:HY_FlowPath ;
+schema:name ?name ;
+gsp:hasGeometry/gsp:asWKT ?wkt .
+
+# Case-insensitive substring match
+FILTER(CONTAINS(LCASE(STR(?name)), LCASE(STR(?searchString))))
+}
+ORDER BY ?name
+`,
+tags: [ 'mainstem', "pattern" ],
+category: 'Location Queries'
+},
+];
+	
 wikibase.queryService.ui.dialog.QueryExampleDialog = ( function ( $ ) {
 	'use strict';
 
@@ -145,144 +286,7 @@ wikibase.queryService.ui.dialog.QueryExampleDialog = ( function ( $ ) {
 
 		// Hardcoded query examples; we put them here since geoconnex doesn't have a mediawiki endpoint
 		// and thus it is easier to just hardcode them
-		var examples = [
-			{
-				title: 'Get 10 random triples',
-            query: `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT * WHERE {
-  ?sub ?pred ?obj .
-} 
-LIMIT 10`,
-				href: '#',
-				tags: [ 'misc', 'simple' ],
-				category: 'Miscellaneous Queries'
-			},
-						{
-				title: 'Get 100 random locations',
-            query: `PREFIX gsp: <http://www.opengis.net/ont/geosparql#>
-SELECT DISTINCT ?monitoringLocation ?wkt
-WHERE {
-  ?monitoringLocation gsp:hasGeometry/gsp:asWKT ?wkt .
-}
-LIMIT 100
-`,
-				href: '#',
-				tags: [ 'misc', 'simple' ],
-				category: 'Miscellaneous Queries'
-			},
-						{
-				title: 'Total datasets in Geoconnex',
-            query: `PREFIX schema: <https://schema.org/>
-
-SELECT (COUNT(?dataset) AS ?numDatasets)
-WHERE {
-  ?dataset a schema:Dataset .
-}
-`,
-				href: '#',
-				tags: [ 'misc', 'simple', 'datasets' ],
-				category: 'Miscellaneous Queries'
-			},
-			{
-				title: 'All datasets about the Animas River mainstem',
-				query: `PREFIX schema: <https://schema.org/>
-PREFIX gsp: <http://www.opengis.net/ont/geosparql#>
-PREFIX hyf: <https://www.opengis.net/def/schema/hy_features/hyf/>
-SELECT DISTINCT ?monitoringLocation ?siteName ?datasetDescription ?type ?url
-     ?variableMeasured ?variableUnit ?measurementTechnique ?temporalCoverage
-     ?distributionName ?distributionURL ?distributionFormat ?wkt
-WHERE {
-VALUES ?mainstem { <https://geoconnex.us/ref/mainstems/35394> }
-
-?monitoringLocation hyf:referencedPosition/hyf:HY_IndirectPosition/hyf:linearElement ?mainstem ;
-                    schema:subjectOf ?item ;
-                    hyf:HydroLocationType ?type ;
-                    gsp:hasGeometry/gsp:asWKT ?wkt .
-
-?item schema:name ?siteName ;
-      schema:temporalCoverage ?temporalCoverage ;
-      schema:url ?url ;
-      schema:variableMeasured ?variableMeasured .
-
-?variableMeasured schema:description ?datasetDescription ;
-                  schema:name ?variableMeasuredName ;
-                  schema:unitText ?variableUnit ;
-                  schema:measurementTechnique ?measurementTechnique .
-
-OPTIONAL {
-  ?item schema:distribution ?distribution .
-  ?distribution schema:name ?distributionName ;
-                schema:contentUrl ?distributionURL ;
-                schema:encodingFormat ?distributionFormat .
-}
-
-# Filter datasets by the desired variable description
-FILTER(REGEX(?datasetDescription, "temperature", "i"))
-}
-ORDER BY ?siteName`,
-				href: '#',
-				tags: [ 'mainstem', 'datasets' ],
-				category: 'Dataset Queries'
-			},
-			{
-				title: 'Map all monitoring locations on the Snake River',
-				query: `PREFIX hyf: <https://www.opengis.net/def/schema/hy_features/hyf/>
-PREFIX gsp: <http://www.opengis.net/ont/geosparql#>
-
-SELECT DISTINCT ?monitoringLocation ?wkt
-WHERE {
-  # Specify your desired mainstem 
-  VALUES ?mainstem { <https://geoconnex.us/ref/mainstems/35394> }
-
-  # Get monitoring locations along the mainstem
-  ?monitoringLocation hyf:referencedPosition/hyf:HY_IndirectPosition/hyf:linearElement ?mainstem ;
-                      gsp:hasGeometry/gsp:asWKT ?wkt .
-}
-`,
-				href: '#',
-				tags: [ 'mainstem', 'map' ],
-				category: 'Location Queries'
-			},
-						{
-				title: 'All rivers that are upstream of the Sacramento River',
-				query: `PREFIX hyf: <https://www.opengis.net/def/schema/hy_features/hyf/>
-PREFIX gsp: <http://www.opengis.net/ont/geosparql#>
- 
-SELECT DISTINCT ?mainstems ?wkt
-WHERE {
-  VALUES ?mainstem { <https://geoconnex.us/ref/mainstems/1> }
-  ?mainstems hyf:downstreamWaterbody+ ?mainstem ;
-                      gsp:hasGeometry/gsp:asWKT ?wkt .
-}`,
-				tags: [ 'mainstem', "downstream" ],
-				category: 'Location Queries'
-			},
-									{
-				title: 'All rivers that have "Charles" in their name',
-				query: `PREFIX hyf: <https://www.opengis.net/def/schema/hy_features/hyf/>
-PREFIX gsp: <http://www.opengis.net/ont/geosparql#>
-PREFIX schema: <https://schema.org/>
-
-SELECT DISTINCT ?mainstem ?name ?wkt
-WHERE {
-  BIND("Charles" AS ?searchString)
-  
-  # flowpath allows us to filter by mainstems
-  ?mainstem a hyf:HY_FlowPath ;
-            schema:name ?name ;
-            gsp:hasGeometry/gsp:asWKT ?wkt .
-
-  # Case-insensitive substring match
-  FILTER(CONTAINS(LCASE(STR(?name)), LCASE(STR(?searchString))))
-}
-ORDER BY ?name
-`,
-				tags: [ 'mainstem', "pattern" ],
-				category: 'Location Queries'
-			},
-
-		];
+		var examples = SPARQL_EXAMPLES;
 
 		self._examples = examples;
 		self._initTagCloud();

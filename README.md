@@ -1,4 +1,16 @@
-# Wikibase Query Service GUI
+# Wikibase Query Service GUI (Internet of Water Work)
+
+
+----
+
+**_Fork Information_**
+
+This is a forked version of the wikidata sparql service GUI. This contains the same core logic but with anything wikidata specific removed. To add more examples, add to the array of examples on this object in [this file](./wikibase/queryService/ui/dialog/QueryExampleDialog.js#L9). 
+
+We have not altered other parts of the codebase since the original repository does not have a modern JS build tool and is quite difficult to do more complex updates or update to add files from disk during build.
+
+---
+
 
 This repository contains the GUI for the [Wikidata Query Service](https://query.wikidata.org/).
 
