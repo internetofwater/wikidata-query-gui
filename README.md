@@ -1,4 +1,4 @@
-# Wikibase Query Service GUI (Internet of Water Work)
+# Wikibase Query Service GUI (Internet of Water Fork)
 
 
 ----
